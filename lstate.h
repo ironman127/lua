@@ -24,7 +24,7 @@ typedef struct CallInfo CallInfo;
 ** be kept somehow accessible until being freed, so all objects always
 ** belong to one (and only one) of these lists, using field 'next' of
 ** the 'CommonHeader' for the link:
-**
+** 所有对象都会被挂载在global_State中的下列链表之一：
 ** 'allgc': all objects not marked for finalization;
 ** 'finobj': all objects marked for finalization;
 ** 'tobefnz': all objects ready to be finalized;
@@ -69,7 +69,7 @@ typedef struct CallInfo CallInfo;
 ** in all objects, but it always has this name.)  Any gray object
 ** must belong to one of these lists, and all objects in these lists
 ** must be gray (with two exceptions explained below):
-**
+** 灰色GC对象存在于下列链表之一：
 ** 'gray': regular gray objects, still waiting to be visited.
 ** 'grayagain': objects that must be revisited at the atomic phase.
 **   That includes

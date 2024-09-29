@@ -2,6 +2,11 @@
 ** $Id: lgc.h $
 ** Garbage Collector
 ** See Copyright Notice in lua.h
+** GC过程：pause -> propogate(可拆分) -> atomic -> swpallgc(可拆分) -> swpfinobj(可拆分) -> swptobefnz(可拆分) ->swpend -> callfin(可拆分)
+** 白色：没有对象能访问到
+** 灰色：被其他灰色对象访问到，但自身对其他对象的引用还没有遍历
+** 黑色：不可被回收，且对其他对象的引用已经遍历完成
+** GC 引用： 即指针类型的成员。
 */
 
 #ifndef lgc_h

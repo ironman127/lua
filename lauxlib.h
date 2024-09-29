@@ -1,6 +1,6 @@
 /*
 ** $Id: lauxlib.h $
-** Auxiliary functions for building Lua libraries
+** Auxiliary functions for building Lua libraries， 辅助函数库
 ** See Copyright Notice in lua.h
 */
 

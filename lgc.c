@@ -288,6 +288,7 @@ GCObject *luaC_newobj (lua_State *L, int tt, size_t sz) {
 ** upvalues can call this function recursively, but this recursion goes
 ** for at most two levels: An upvalue cannot refer to another upvalue
 ** (only closures can), and a userdata's metatable must be a table.
+** 当Object中有引用其他GCObject对象时，需要将当前节点设为灰色，否则设为黑色
 */
 static void reallymarkobject (global_State *g, GCObject *o) {
   g->marked++;
@@ -299,10 +300,10 @@ static void reallymarkobject (global_State *g, GCObject *o) {
     }
     case LUA_VUPVAL: {
       UpVal *uv = gco2upv(o);
-      if (upisopen(uv))
+      if (upisopen(uv)) // 引用的对象可能会改变
         set2gray(uv);  /* open upvalues are kept gray */
       else
-        set2black(uv);  /* closed upvalues are visited here */
+        set2black(uv);  /* closed upvalues are visited here 此时，upval引用的对象不会改变了*/
       markvalue(g, uv->v.p);  /* mark its content */
       break;
     }
@@ -657,10 +658,11 @@ static void traversethread (global_State *g, lua_State *th) {
 
 /*
 ** traverse one gray object, turning it to black.
+** 取出一个gray obj，并将其置为黑色
 */
 static void propagatemark (global_State *g) {
   GCObject *o = g->gray;
-  nw2black(o);
+  nw2black(o); /* 当前节点标记为黑色 */
   g->gray = *getgclist(o);  /* remove from 'gray' list */
   switch (o->tt) {
     case LUA_VTABLE: traversetable(g, gco2t(o)); break;

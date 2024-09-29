@@ -141,6 +141,7 @@ struct BlockCnt;  /* defined in lparser.c */
 
 
 /* state needed to generate code for a given function */
+/*分析阶段的临时数据结构，表示函数定义的嵌套关系，为生成最终的Proto服务*/
 typedef struct FuncState {
   Proto *f;  /* current function header */
   struct FuncState *prev;  /* enclosing function */

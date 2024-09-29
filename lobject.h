@@ -45,10 +45,12 @@
 
 /*
 ** Union of all Lua values
+** TValue本身是一个值类型。一段内存
+** 当TValue是GCObject的时候，内存的头部是CommonHeader，后面为自身数据
 */
 typedef union Value {
   struct GCObject *gc;    /* collectable objects */
-  void *p;         /* light userdata */
+  void *p;         /* light userdata lua GC 不会回收这里的内存 */
   lua_CFunction f; /* light C functions */
   lua_Integer i;   /* integer numbers */
   lua_Number n;    /* float numbers */
@@ -60,6 +62,7 @@ typedef union Value {
 /*
 ** Tagged Values. This is the basic representation of values in Lua:
 ** an actual value plus a tag with its type.
+** 包含数据和类型信息
 */
 
 #define TValuefields	Value value_; lu_byte tt_
@@ -68,7 +71,7 @@ typedef struct TValue {
   TValuefields;
 } TValue;
 
-
+/* 原始对象 */
 #define val_(o)		((o)->value_)
 #define valraw(o)	(val_(o))
 
@@ -301,13 +304,20 @@ typedef union {
 #define CommonHeader	struct GCObject *next; lu_byte tt; lu_byte marked
 
 
-/* Common type for all collectable objects */
+/* Common type for all collectable objects 并不会创建真正的GCobj, commonheader被作为其他对象的内存头部，在GC其他对象的时候会回收
+** 可以理解为抽象基类，不会创建。GC的主要任务是回收分配器分配的内存。
+ */
 typedef struct GCObject {
   CommonHeader;
 } GCObject;
 
 
 /* Bit mark for collectable types */
+/*
+** raw bit: 0-3
+** varint bit: 4-5
+** gc bit: 6
+*/
 #define BIT_ISCOLLECTABLE	(1 << 6)
 
 #define iscollectable(o)	(rawtt(o) & BIT_ISCOLLECTABLE)
@@ -401,6 +411,7 @@ typedef struct GCObject {
 
 /*
 ** Header for a string value.
+** 没有引用其他GCObject的指针，GC mark直接设为黑色
 */
 typedef struct TString {
   CommonHeader;
@@ -486,6 +497,10 @@ typedef union UValue {
 /*
 ** Header for userdata with user values;
 ** memory area follows the end of this structure.
+** Udata中没有引用其他GCObject的指针，GC mark可以直接设为黑色
+** 例如uv是一个表的时候，表本身的内存在Udata中，但是Table中的一些字段（array）却引用的其他内存。
+** 因此当GC遍历到Udata是，Udata本身可以直接置为黑色，因为Udata本身没有引用其他内存。
+** 但是uv却有可能引用其他内存，所以需要对uv进一步遍历。
 */
 typedef struct Udata {
   CommonHeader;
@@ -493,7 +508,7 @@ typedef struct Udata {
   size_t len;  /* number of bytes */
   struct Table *metatable;
   GCObject *gclist;
-  UValue uv[1];  /* user values */
+  UValue uv[1];  /* user values 值类型 */
 } Udata;
 
 
@@ -558,7 +573,7 @@ typedef struct Upvaldesc {
 */
 typedef struct LocVar {
   TString *varname;
-  int startpc;  /* first point where variable is active */
+  int startpc;  /* first point where variable is active 作用域开始 */
   int endpc;    /* first point where variable is dead */
 } LocVar;
 
@@ -677,7 +692,7 @@ typedef struct UpVal {
       struct UpVal *next;  /* linked list */
       struct UpVal **previous;
     } open;
-    TValue value;  /* the value (when closed) */
+    TValue value;  /* the value (when closed) 栈局部变量被回收时，变量copy到这里 */
   } u;
 } UpVal;
 
@@ -696,7 +711,7 @@ typedef struct CClosure {
 typedef struct LClosure {
   ClosureHeader;
   struct Proto *p;
-  UpVal *upvals[1];  /* list of upvalues */
+  UpVal *upvals[1];  /* list of upvalues， 间接引用 */
 } LClosure;
 
 

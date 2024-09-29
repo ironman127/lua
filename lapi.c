@@ -1,6 +1,6 @@
 /*
 ** $Id: lapi.c $
-** Lua API
+** Lua API，lua C语言接口
 ** See Copyright Notice in lua.h
 */
 

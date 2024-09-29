@@ -1153,9 +1153,9 @@ void luaV_finishOp (lua_State *L) {
 
 
 void luaV_execute (lua_State *L, CallInfo *ci) {
-  LClosure *cl;
-  TValue *k;
-  StkId base;
+  LClosure *cl; // 当前所在函数环境
+  TValue *k; // 当前函数环境的常量数组
+  StkId base; // 当前函数环境的栈base指针
   const Instruction *pc;
   int trap;
 #if LUA_USE_JUMPTABLE

@@ -2,7 +2,7 @@
 # see luaconf.h for further customization
 
 # == CHANGE THE SETTINGS BELOW TO SUIT YOUR ENVIRONMENT =======================
-
+MODE=DEBUG
 # Warnings valid for both C and C++
 CWARNSCPP= \
 	-Wfatal-errors \
@@ -77,6 +77,9 @@ MYLIBS= -ldl -lreadline
 
 CC= gcc
 CFLAGS= -Wall -O2 $(MYCFLAGS) -fno-stack-protector -fno-common -march=native
+ifeq ($(MODE), DEBUG)
+	CFLAGS= -g3 -ggdb -gdwarf-2 -fstack-protector-all -fno-omit-frame-pointer $(MYCFLAGS)
+endif
 AR= ar rc
 RANLIB= ranlib
 RM= rm -f
